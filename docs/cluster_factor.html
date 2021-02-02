@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>集群機場生態</title>
+    <link rel="stylesheet" href="https://yui-s.yahooapis.com/pure/0.5.0/pure-min.css">
+    <link rel="stylesheet" href="https://rawgit.com/tpreusse/radar-chart-d3/master/src/radar-chart.css">
+
+    <!-- spider chart-->
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <script src="js/radar-chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/1.13.0/d3-legend.min.js"></script>
+
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"
+        crossorigin="anonymous"></script>
+
+    <style>
+        .radar-chart .area {
+            fill-opacity: 0.7;
+        }
+
+        .radar-chart.focus .area {
+            fill-opacity: 0.3;
+        }
+
+        .radar-chart.focus .area.focused {
+            fill-opacity: 0.9;
+        }
+
+        .area.group0,
+        .group0 .circle {
+            fill: #f56467;
+            stroke: none;
+        }
+
+        .area.group1,
+        .group1 .circle {
+            fill: #9c5ea8;
+            stroke: none;
+        }
+
+        .area.group2,
+        .group2 .circle {
+            fill: #5ba8f5;
+            stroke: none;
+        }
+
+        .area.group3,
+        .group3 .circle {
+            fill: #70c435;
+            stroke: none;
+        }
+
+        .single.radar-chart .legend.middle {
+            font-size: 35px;
+            font-family: monospace;
+        }
+
+        .single.radar-chart .legend.right {
+            font-size: 35px;
+            font-family: monospace;
+        }
+
+        .single.radar-chart .legend.left {
+            font-size: 35px;
+            font-family: monospace;
+        }
+
+        .cell {
+            line-height: 50px;
+        }
+    </style>
+</head>
+
+<body class="sb-nav-fixed">
+
+    <!-- 上面那一行標頭-->
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <a class="navbar-brand" href="index.html"><i class="fas fa-head-side-mask"></i> 小心疫翼</a>
+        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i
+                class="fas fa-bars"></i></button>
+    </nav>
+
+    <!-- 左邊邊 -->
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">首頁</div>
+                        <a class="nav-link" href="index.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            總覽
+                        </a>
+                        <div class="sb-sidenav-menu-heading">分析結果</div>
+                        <a class="nav-link" href="country_change.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-globe-asia"></i></div>
+                            各國機場航班變化
+                        </a>
+                        <a class="nav-link" href="cluster_factor.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-thumbtack"></i></div>
+                            集群機場生態
+                        </a>
+                        <a class="nav-link" href="airport_cluster.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-paper-plane"></i></div>
+                            疫情前後差異
+                        </a>
+                    </div>
+                </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small"></div>
+                    <i class="fas fa-users"></i> BDSE15-4
+                </div>
+            </nav>
+        </div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <h1 class="mt-4">集群特徵</h1>
+                    <!-- <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item"><a href="index.html">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Charts</li>
+                    </ol> -->
+                    <div class="card mb-4">
+                        <div class="card-body" id="description1">
+                            <!-- 集群的組成是由哪些特徵影響 -->
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-tags"></i>
+                                    CLUSTERS and FACTORS - Percentage
+                                </div>
+                                <div class="card-body">
+                                    <svg id="my_spider" width="100%" height="600"></svg>
+
+                                    <!-- Spider Chart-->
+                                    <script>
+                                        // 匯入資料
+                                        var data = [
+                                            {
+                                                className: 'group3',
+                                                axes: [
+                                                    { axis: "短程", value: 0.932 },
+                                                    { axis: "白天", value: 0.824 },
+                                                    { axis: "夜晚", value: 0.176 },
+                                                    { axis: "國際", value: 0.074 },
+                                                    { axis: "國內", value: 0.926 },
+                                                    { axis: "長程", value: 0.007 },
+                                                    { axis: "中程", value: 0.061 },
+                                                ]
+                                            },
+                                            {
+                                                className: 'group2',
+                                                axes: [
+                                                    { axis: "短程", value: 0.536 },
+                                                    { axis: "白天", value: 0.665 },
+                                                    { axis: "夜晚", value: 0.335 },
+                                                    { axis: "國際", value: 0.522 },
+                                                    { axis: "國內", value: 0.478 },
+                                                    { axis: "長程", value: 0.087 },
+                                                    { axis: "中程", value: 0.377 },
+                                                ]
+                                            },
+                                            {
+                                                className: 'group1',
+                                                axes: [
+                                                    { axis: "短程", value: 0.718 },
+                                                    { axis: "白天", value: 0.726 },
+                                                    { axis: "夜晚", value: 0.274 },
+                                                    { axis: "國際", value: 0.311 },
+                                                    { axis: "國內", value: 0.689 },
+                                                    { axis: "長程", value: 0.034 },
+                                                    { axis: "中程", value: 0.248 },
+                                                ]
+                                            },
+                                            {
+                                                className: 'group0',
+                                                axes: [
+                                                    { axis: "短程", value: 0.508 },
+                                                    { axis: "白天", value: 0.668 },
+                                                    { axis: "夜晚", value: 0.332 },
+                                                    { axis: "國際", value: 0.381 },
+                                                    { axis: "國內", value: 0.619 },
+                                                    { axis: "長程", value: 0.129 },
+                                                    { axis: "中程", value: 0.363 },
+                                                ]
+                                            },
+                                        ];
+
+                                        // 建立一個radar
+                                        var chart = RadarChart.chart();
+                                        var cfg = chart.config();
+
+                                        d3.select("#my_spider")
+                                            .append('g')
+                                            .classed('single', 1)
+                                            .attr("transform", "translate(20,50)")
+                                            .datum(data).call(chart)
+
+                                        // Add legend
+                                        var svg1 = d3.selectAll("#my_spider").append("g")
+                                            .attr('width', 300)
+                                            .attr('height', cfg.h + cfg.h / 15)
+                                            .attr("transform", "translate(470,10)")
+
+                                        // Handmade legend
+                                        svg1.append("circle").attr("cx", 10).attr("cy", 130).attr("r", 8).style("fill", "#d62728")
+                                        svg1.append("circle").attr("cx", 10).attr("cy", 170).attr("r", 8).style("fill", "#ff7f0e")
+                                        svg1.append("circle").attr("cx", 10).attr("cy", 210).attr("r", 8).style("fill", "#2ca02c")
+                                        svg1.append("circle").attr("cx", 10).attr("cy", 250).attr("r", 8).style("fill", "#1f77b4")
+                                        svg1.append("text").attr("x", 25).attr("y", 132).text("巨型").style("font-size", "25px").style("font-family", "monospace").attr("alignment-baseline", "middle").style("fill", "#d62728").style("font-weight", "bold")
+                                        svg1.append("text").attr("x", 25).attr("y", 172).text("大型").style("font-size", "25px").style("font-family", "monospace").attr("alignment-baseline", "middle").style("fill", "#ff7f0e").style("font-weight", "bold")
+                                        svg1.append("text").attr("x", 25).attr("y", 212).text("中型").style("font-size", "25px").style("font-family", "monospace").attr("alignment-baseline", "middle").style("fill", "#2ca02c").style("font-weight", "bold")
+                                        svg1.append("text").attr("x", 25).attr("y", 252).text("小型").style("font-size", "25px").style("font-family", "monospace").attr("alignment-baseline", "middle").style("fill", "#1f77b4").style("font-weight", "bold")
+
+                                    </script>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    最能區分各級群的特徵為：短程, 白天, 國內, 國際。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-th"></i>
+                                    CLUSTERS and FACTORS - Amount
+                                </div>
+                                <div class="card-body" id="heatmap">
+                                    <svg id="my_heatmap" width="100%" height="600"></svg>
+                                    <script>
+
+                                        var margin = { top: 30, right: 30, bottom: 30, left: 100 },
+                                            width = 400 - margin.left - margin.right,
+                                            height = 500 - margin.top - margin.bottom;
+
+                                        var svg = d3.select("#my_heatmap")
+                                            .append("g")
+                                            .attr("transform",
+                                                "translate(" + (margin.left) + "," + (margin.bottom * 2) + ")");
+
+                                        // Labels of row and columns
+                                        var myGroups = ["巨型", "大型", "中型", "小型"]
+                                        var myVars = ["國內", "國際", "白天", "夜晚", "長程", "中程", "短程"]
+
+                                        // Build X scales and axis:
+                                        var x = d3.scale.ordinal()
+                                            .domain(myGroups)
+                                            .rangeRoundBands([0, width], 0.01);
+                                        var xAxis = d3.svg.axis()
+                                            .scale(x)
+                                            .orient("bottom")
+                                            .innerTickSize(25)
+                                        svg.append("g")
+                                            .attr("transform", "translate(0," + height + ")")
+                                            .call(xAxis)
+                                            .style("font-size", "28px")
+                                            .style("font-family", "monospace")
+                                            .style("font-weight", "bold")
+                                            .style("stroke-width", 3)
+
+                                        // Build Y scales and axis:
+                                        var y = d3.scale.ordinal()
+                                            .domain(myVars)
+                                            .rangeRoundBands([height, 0], 0.01);
+                                        var yAxis = d3.svg.axis()
+                                            .scale(y)
+                                            .orient("left")
+                                            .innerTickSize(25)
+                                        svg.append("g")
+                                            .call(yAxis)
+                                            .style("font-size", "30px")
+                                            .style("font-family", "monospace")
+                                            .style("font-weight", "bold")
+                                            .style("stroke-width", 1)
+
+                                        // Build color scale
+                                        var myColor = d3.scale.linear()
+                                            .range(["#66B3FF", "#005AB5"])
+                                            .domain([10, 140000])
+
+                                        // Add legend
+                                        var svg1 = d3.select("#my_heatmap")
+                                            .append("g")
+                                            .attr("width", width)
+                                            .attr("height", height + margin.top + margin.bottom)
+                                            .attr("transform",
+                                                "translate(" + 400 + "," + margin.top + ")")
+
+                                        svg1.append("g")
+                                            .attr("class", "legendLinear")
+                                            .attr("transform", "translate(20,100)");
+
+                                        var legendLinear = d3.legend.color()
+                                            .shapeWidth(30)
+                                            .shapeHeight(25)
+                                            .scale(myColor);
+
+                                        svg1.select(".legendLinear")
+                                            .call(legendLinear)
+                                            .style("font-size", "20px")
+                                            .style("padding", "10px")
+
+                                        //Read the data
+                                        d3.csv("./data/heatmap_2019.csv", function (data) {
+
+                                            // create a tooltip，建立標籤
+                                            var tooltip = d3.select("#heatmap")
+                                                .append("div")
+                                                .style("opacity", 0)
+                                                .attr("class", "tooltip")
+                                                .style("position", "absolute")
+                                                .style("background-color", "white")
+                                                .style("border", "solid")
+                                                .style("border-width", "2px")
+                                                .style("border-radius", "3px")
+                                                .style("padding", "5px")
+                                                .style("font-family", "Arial")
+                                                .style("font-size", "20px")
+
+                                            // Three function that change the tooltip when user hover / move / leave a cell
+                                            var mouseover2 = function (d) {
+                                                tooltip.style("opacity", 1)
+                                                d3.select(this)
+                                                    .style("stroke", "black")
+                                                    .style("opacity", 1)
+                                            }
+                                            var mousemove2 = function (d) {
+                                                tooltip.html("平均航班數: " + d.value)
+                                                    .style("left", (d3.mouse(this)[0] + 300) + "px")
+                                                    .style("top", (d3.mouse(this)[1] + 50) + "px")
+                                            }
+                                            var mouseleave2 = function (d) {
+                                                tooltip.style("opacity", 0)
+                                                d3.select(this)
+                                                    .style("stroke", "none")
+                                                    .style("opacity", 0.7)
+                                            }
+
+                                            // Add the squares(heat方格)
+                                            svg.selectAll()
+                                                .data(data, function (d) { return d.group + ':' + d.variable; })
+                                                .enter()
+                                                .append("rect")
+                                                .attr("x", function (d) { return x(d.group) })
+                                                .attr("y", function (d) { return y(d.variable) })
+                                                .attr("rx", 10)
+                                                .attr("ry", 10)
+                                                .attr("width", x.rangeBand())
+                                                .attr("height", y.rangeBand())
+                                                .style("fill", function (d) { return myColor(d.value) })
+                                                .style("stroke", "none")
+                                                .style("stroke-width", 4)
+                                                .style("opacity", 0.7)
+                                                .on("mouseover", mouseover2)
+                                                .on("mousemove", mousemove2)
+                                                .on("mouseleave", mouseleave2)
+
+                                        })
+
+                                    </script>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    國內線與白天航班，是判斷巨型機場與大型機場兩群最重要的特徵。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 其他連結 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+    <script src="js/scripts.js"></script>
+
+</body>
+
+</html>

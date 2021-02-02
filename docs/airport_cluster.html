@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="description" content="" />
+  <meta name="author" content="" />
+  <title>疫情前後差異</title>
+  <link rel="stylesheet" href="https://yui-s.yahooapis.com/pure/0.5.0/pure-min.css">
+  <link rel="stylesheet" href="https://rawgit.com/tpreusse/radar-chart-d3/master/src/radar-chart.css">
+  <!-- zoom使用的套件 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+  <!-- Load d3.js and the geo projection plugin -->
+  <script src="https://d3js.org/d3.v4.js"></script>
+  <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+  <link href="css/styles.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"
+    crossorigin="anonymous"></script>
+  <style>
+    .mapsvg {
+      background-color: #d6e9fd;
+    }
+
+    .G1 {
+      fill-opacity: 0.3;
+      stroke-width: 0.5;
+    }
+
+    .G3 {
+      fill-opacity: 0.1;
+      stroke-width: 0.3;
+    }
+
+    label {
+      font-family: Arial;
+      font-weight: bold;
+      font-size: 20px;
+      margin-right: 5px;
+    }
+
+    #G0 {
+      color: #AD5A5A;
+      font-size: 25px;
+      margin: 10px;
+    }
+
+    #G1 {
+      color: #fdad00;
+      font-size: 25px;
+      margin: 10px;
+    }
+
+    #G2 {
+      color: #0066CC;
+      font-size: 25px;
+      margin: 10px;
+    }
+
+    #G3 {
+      color: #6bc541;
+      font-size: 25px;
+      margin: 10px;
+    }
+
+    #img1 {
+      display: block;
+      margin: -50px auto 70px auto;
+    }
+
+    #p1 {
+      font-size: 18px;
+      color: #AD5A5A;
+      font-weight: 700;
+    }
+
+    #p2 {
+      font-size: 18px;
+      color: #0066CC;
+      font-weight: 700;
+    }
+
+    #p3 {
+      font-size: 18px;
+      color: #fdad00;
+      font-weight: 700;
+    }
+
+    #p4 {
+      font-size: 18px;
+      color: #6bc541;
+      font-weight: 700;
+    }
+  </style>
+
+</head>
+
+<body class="sb-nav-fixed">
+
+  <!-- 上面那一行標頭-->
+  <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.html"><i class="fas fa-head-side-mask"></i> 小心疫翼</a>
+    <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i
+        class="fas fa-bars"></i></button>
+  </nav>
+
+  <!-- 左邊邊 -->
+  <div id="layoutSidenav">
+    <div id="layoutSidenav_nav">
+      <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+        <div class="sb-sidenav-menu">
+          <div class="nav">
+            <div class="sb-sidenav-menu-heading">首頁</div>
+            <a class="nav-link" href="index.html">
+              <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+              總覽
+            </a>
+            <div class="sb-sidenav-menu-heading">分析結果</div>
+            <a class="nav-link" href="country_change.html">
+              <div class="sb-nav-link-icon"><i class="fas fa-globe-asia"></i></div>
+              各國機場航班變化
+            </a>
+            <a class="nav-link" href="cluster_factor.html">
+              <div class="sb-nav-link-icon"><i class="fas fa-thumbtack"></i></div>
+              集群機場生態
+            </a>
+            <a class="nav-link" href="airport_cluster.html">
+              <div class="sb-nav-link-icon"><i class="fas fa-paper-plane"></i></div>
+              疫情前後差異
+            </a>
+          </div>
+        </div>
+        <div class="sb-sidenav-footer">
+          <div class="small"></div>
+          <i class="fas fa-users"></i> BDSE15-4
+        </div>
+      </nav>
+    </div>
+
+    <!-- 主要頁面內容 -->
+    <div id="layoutSidenav_content">
+      <main>
+        <div class="container-fluid">
+          <h1 class="mt-4">各群機場與指標</h1>
+          <div class="card mb-4">
+            <div class="card-body" id="description1">
+              <!-- 疫情雖然嚴峻，但透過各集群的標竿機場，可以提供其他同群機場規劃建議 -->
+            </div>
+          </div>
+
+          <h2 class="cardh2"><i class="fas fa-map-marker-alt"></i> 各集群機場全球分布</h2>
+          <div class="card mb-4">
+            <div class="card-body">
+              <svg id="my_dataviz" width="100%" height="700"></svg>
+
+              <script>
+                // svg
+                var svg = d3.select("svg").attr("class", "mapsvg"),
+                  width = svg.attr("width"),
+                  height = svg.attr("height");
+
+              </script>
+
+              <!-- Button -->
+              <div>
+                <input type="checkbox" class="checkbox" value="G0" checked><label id="G0">巨型機場</label>
+                <input type="checkbox" class="checkbox" value="G2" checked><label id="G2">大型機場</label>
+                <input type="checkbox" class="checkbox" value="G1" checked><label id="G1">中型機場</label>
+                <input type="checkbox" class="checkbox" value="G3" checked><label id="G3">小型機場</label>
+              </div>
+
+              <script>
+                // Map projection(d3.geoAzimuthalEqualArea())
+                var projection = d3.geoMercator()
+                  .center([-55, 35])
+                  .scale(300)
+                // .scale(width / 1.9 / Math.PI)
+                // .rotate([-180,0]);
+
+                var path = d3.geoPath()
+                  .projection(projection);
+
+                var g = svg.append("g");
+
+                // Load external data and boot
+                d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson", function (data) {
+
+                  // Draw the map
+                  g.selectAll("myPath")
+                    .data(data.features)
+                    .enter()
+                    .append("path")
+                    .attr("fill", "#2983dd")
+                    .attr("d", d3.geoPath()
+                      .projection(projection)
+                    )
+                    .style("stroke", "white")
+                    .style("opacity", .3)
+
+                })
+
+                // Create data for circles
+                d3.csv("./data/change_map.csv", function (error, data) {
+                  console.log(data)
+
+                  var markers = []
+                  data.forEach(function (row) {
+                    topush = {
+                      long: Number(row.longitude),
+                      lat: Number(row.latitude),
+                      size: Number(row.change),
+                      group: row.group
+                    }
+                    markers.push(topush)
+                  })
+                  console.log(markers);
+
+                  // Create a color scale
+                  var color = d3.scaleOrdinal()
+                    .domain(["G0", "G1", "G2", "G3"])
+                    .range(["#AD5A5A", "#FFD306", "#0066CC", "#6bc541"])
+
+                  // Add a scale for bubble size
+                  var size = d3.scaleLinear()
+                    .domain([-1, 7000])
+                    .range([4, 50])
+
+                  // Add circles:
+                  g
+                    .selectAll("myCircles")
+                    .data(markers)
+                    .enter()
+                    .append("circle")
+                    .attr("class", function (d) { return d.group }) // 替圈圈加上A,B,C,D四個class
+                    .attr("cx", function (d) { return projection([d.long, d.lat])[0] })
+                    .attr("cy", function (d) { return projection([d.long, d.lat])[1] })
+                    .attr("r", function (d) { return size(d.size) })
+                    .style("fill", function (d) { return color(d.group) })
+                    .attr("stroke", function (d) { return color(d.group) })
+                    .attr("stroke-width", 1)
+                    .attr("fill-opacity", .6)
+
+                  // This function is gonna change the opacity and size of selected and unselected circles
+                  function update() {
+
+                    // For each check box:
+                    d3.selectAll(".checkbox").each(function (d) {
+                      cb = d3.select(this); // select class=checkbox
+                      grp = cb.property("value") // 
+
+                      // If the box is check, I show the group
+                      if (cb.property("checked")) {
+                        svg.selectAll("." + grp).transition().duration(1000).style("opacity", 1).attr("r", function (d) { return size(d.size) })
+
+                        // Otherwise I hide it
+                      } else {
+                        svg.selectAll("." + grp).transition().duration(1000).style("opacity", 0).attr("r", 0)
+                      }
+                    })
+
+                    // Add legend
+                    // Add legend: circles
+                    var valuesToShow = [0, 2000, 6000]
+                    var xCircle = 60
+                    var xLabel = 120
+                    svg
+                      .selectAll("legend")
+                      .data(valuesToShow)
+                      .enter()
+                      .append("circle")
+                      .attr("cx", xCircle)
+                      .attr("cy", function (d) { return height + 300 - size(d) - 30 })
+                      .attr("r", function (d) { return size(d) })
+                      .style("fill", "none")
+                      .attr("stroke", "black")
+
+                    // Add legend: segments
+                    svg
+                      .selectAll("legend")
+                      .data(valuesToShow)
+                      .enter()
+                      .append("line")
+                      .attr('x1', function (d) { return xCircle + size(d) })
+                      .attr('x2', xLabel)
+                      .attr('y1', function (d) { return height + 300 - size(d) - 30 })
+                      .attr('y2', function (d) { return height + 300 - size(d) - 30 })
+                      .attr('stroke', 'black')
+                      .style('stroke-dasharray', ('2,2'))
+
+                    // Add legend: labels
+                    svg
+                      .selectAll("legend")
+                      .data(valuesToShow)
+                      .enter()
+                      .append("text")
+                      .attr('x', xLabel)
+                      .attr('y', function (d) { return height + 300 - size(d) - 30 })
+                      .text(function (d) { return d })
+                      .style("font-size", 15)
+                      .style("fill", "black")
+                      .style("font-weight", "bold")
+                      .style("font-family", "Arial")
+                      .attr('alignment-baseline', 'middle')
+
+                  }
+
+                  // When a button change, I run the update function
+                  d3.selectAll(".checkbox").on("change", update);
+
+                  // And I initialize it at the beginning
+                  update()
+
+                })
+
+                // zoom and pan
+                var zoom = d3.behavior.zoom()
+                  .on("zoom", function () {
+                    g.attr("transform", "translate(" +
+                      d3.event.translate.join(",") + ")scale(" + d3.event.scale + ")");
+                    g.selectAll("circle")
+                      .attr("d", path.projection(projection));
+                    g.selectAll("path")
+                      .attr("d", path.projection(projection));
+                  });
+
+                svg.call(zoom)
+
+              </script>
+            </div>
+
+            <div class="card-footer small text-muted">
+              <p id="p1">巨型機場航班總數減少37.23%</p>
+              <p id="p2">大型機場航班總數減少44.41%</p>
+              <p id="p3">中型機場航班總數減少23.41%</p>
+              <p id="p4">小型機場航班總數增加12.68%</p>
+              欲詳查巨型、大型、中型機場於全球的分布：<a target="_blank" href="./demo/change_bubblemap_012.html">For more details</a>
+            </div>
+          </div>
+
+          <h2 class="cardh2a"><i class="fas fa-chart-bar"></i> 各群差異比較</h2>
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="fas fa-plane-departure"></i>
+                  巨型機場
+                </div>
+                <div class="card-body" id="bar1">
+                  <svg id="my_bar1" width="100%" height="450"></svg>
+                  <script>
+
+                    var margin = { top: 10, right: 30, bottom: 20, left: 50 },
+                      width = 500 - margin.left - margin.right,
+                      height = 400 - margin.top - margin.bottom;
+
+                    var svg1 = d3.select("#my_bar1")
+                      .append("g")
+                      .attr("transform",
+                        "translate(" + (margin.left + 30) + "," + (margin.top + 30) + ")");
+
+                    // svg for legend
+                    var svg1_1 = d3.select("#my_bar1")
+                      .append("g")
+                      .attr("width", 100)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .attr("transform", "translate(480,10)")
+
+                    // Data
+                    d3.csv("./data/Group0_stacked.csv", function (data) {
+                      console.log(data)
+
+                      // List of groups
+                      var airs = d3.map(data, function (d) { return (d.airport) }).keys()
+                      console.log(airs)
+
+                      // List of subgroups
+                      var subgroups = data.columns.slice(2)
+                      console.log(subgroups)
+
+                      // Add X axis
+                      var x = d3.scaleBand()
+                        .domain(airs)
+                        .range([0, (width)])
+                        .padding([0.25])
+                      svg1.append("g")
+                        .attr("transform", "translate(0," + height + ")")
+                        .style("font-size", "15px")
+                        .call(d3.axisBottom(x).tickSize(2));
+
+                      // Add Y axis
+                      var y = d3.scaleLinear()
+                        .domain([0, 650000])
+                        .range([height, 0]);
+                      svg1.append("g")
+                        .call(d3.axisLeft(y));
+
+                      // Another scale for subgroup position
+                      var xSubgroup = d3.scaleBand()
+                        .domain(subgroups)
+                        .range([0, x.bandwidth()])
+                        .padding([0.05])
+
+                      // color palette -subgroup
+                      var color = d3.scaleOrdinal()
+                        .domain(subgroups)
+                        .range(['#377eb8', '#4daf4a'])
+
+                      // Show the bars
+                      var gg = svg1.append("g")
+                        .selectAll("g")
+                        .data(data)
+                        .enter()
+                        .append("g") // 各組的g
+                        .attr("transform", function (d) { return "translate(" + x(d.airport) + ",0)"; })
+                        .selectAll("rect")
+                        .data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key] }; }); })
+                        .enter().append("rect")
+                        .attr("class", function (d) { return "bar" + d.key })
+                        .attr("x", function (d) { return xSubgroup(d.key); })
+                        .attr("y", function (d) { return y(d.value); })
+                        .attr("width", xSubgroup.bandwidth())
+                        .attr("height", function (d) { return height - y(d.value); })
+                        .attr("fill", function (d) { return color(d.key); });
+
+                      // Add one dot in the legend for each name.
+                      var size = 20
+                      svg1_1.selectAll("mydot")
+                        .data(subgroups)
+                        .enter()
+                        .append("circle")
+                        .attr("cx", 10)
+                        .attr("cy", function (d, i) { return 50 + i * (size + 5) + (size / 2) })
+                        .attr("r", 6)
+                        .attr("width", size)
+                        .attr("height", size)
+                        .style("fill", function (d) { return color(d) })
+
+                      // Add one dot in the legend for each name.
+                      svg1_1.selectAll("mylabels")
+                        .data(subgroups)
+                        .enter()
+                        .append("text")
+                        .attr("x", 10 + size * 1.1)
+                        .attr("y", function (d, i) { return 50 + i * (size + 5) + (size / 2) })
+                        .style("fill", function (d) { return color(d) })
+                        .text(function (d) { return d })
+                        .attr("text-anchor", "left")
+                        .style("alignment-baseline", "middle")
+                        .style("font-family", "Verdana")
+                        .style("font-weight", "bold")
+
+                    })
+
+                  </script>
+                </div>
+                <div class="card-footer small text-muted">
+                  由平均數(mean)可看出，疫情嚴重影響到該群整體的航班數量。但其中仍有一些機場表現良好，例如美國的KDEN機場，藉由增加國內航線提升營運。
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card mb-4">
+                <div class="card-header">
+                  <i class="fas fa-plane-arrival"></i>
+                  大型機場
+                </div>
+                <div class="card-body">
+                  <svg id="my_bar2" width="100%" height="450"></svg>
+                  <script>
+
+                    var margin = { top: 10, right: 30, bottom: 20, left: 50 },
+                      width = 500 - margin.left - margin.right,
+                      height = 400 - margin.top - margin.bottom;
+
+                    var svg2 = d3.select("#my_bar2")
+                      .append("g")
+                      .attr("transform",
+                        "translate(" + (margin.left + 30) + "," + (margin.top + 30) + ")");
+
+                    // svg for legend
+                    var svg2_1 = d3.select("#my_bar2")
+                      .append("g")
+                      .attr("width", 100)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .attr("transform", "translate(480,10)")
+
+                    // Data
+                    d3.csv("./data/Group2_stacked.csv", function (data) {
+                      console.log(data)
+
+                      // List of groups 
+                      var airs = d3.map(data, function (d) { return (d.airport) }).keys()
+                      console.log(airs)
+
+                      // List of subgroups
+                      var subgroups = data.columns.slice(2)
+                      console.log(subgroups)
+
+                      // Add X axis
+                      var x = d3.scaleBand()
+                        .domain(airs)
+                        .range([0, width])
+                        .padding([0.25])
+                      svg2.append("g")
+                        .attr("transform", "translate(0," + height + ")")
+                        .style("font-size", "15px")
+                        .call(d3.axisBottom(x).tickSize(2));
+
+                      // Add Y axis
+                      var y = d3.scaleLinear()
+                        .domain([0, 350000])
+                        .range([height, 0]);
+                      svg2.append("g")
+                        .call(d3.axisLeft(y));
+
+                      // Another scale for subgroup position
+                      var xSubgroup = d3.scaleBand()
+                        .domain(subgroups)
+                        .range([0, x.bandwidth()])
+                        .padding([0.05])
+
+                      // color palette -subgroup
+                      var color = d3.scaleOrdinal()
+                        .domain(subgroups)
+                        .range(['#377eb8', '#4daf4a'])
+
+                      // Show the bars
+                      var gg = svg2.append("g")
+                        .selectAll("g")
+                        .data(data)
+                        .enter()
+                        .append("g") // 各組的g
+                        .attr("transform", function (d) { return "translate(" + x(d.airport) + ",0)"; })
+                        .selectAll("rect")
+                        .data(function (d) { return subgroups.map(function (key) { return { key: key, value: d[key] }; }); })
+                        .enter().append("rect")
+                        .attr("class", function (d) { return "bar" + d.key })
+                        .attr("x", function (d) { return xSubgroup(d.key); })
+                        .attr("y", function (d) { return y(d.value); })
+                        .attr("width", xSubgroup.bandwidth())
+                        .attr("height", function (d) { return height - y(d.value); })
+                        .attr("fill", function (d) { return color(d.key); });
+
+                      // Add one dot in the legend for each name.
+                      var size = 20
+                      svg2_1.selectAll("mydot")
+                        .data(subgroups)
+                        .enter()
+                        .append("circle")
+                        .attr("cx", 10)
+                        .attr("cy", function (d, i) { return 50 + i * (size + 5) + (size / 2) })
+                        .attr("r", 6)
+                        .attr("width", size)
+                        .attr("height", size)
+                        .style("fill", function (d) { return color(d) })
+
+                      // Add one dot in the legend for each name.
+                      svg2_1.selectAll("mylabels")
+                        .data(subgroups)
+                        .enter()
+                        .append("text")
+                        .attr("x", 10 + size * 1.1)
+                        .attr("y", function (d, i) { return 50 + i * (size + 5) + (size / 2) })
+                        .style("fill", function (d) { return color(d) })
+                        .text(function (d) { return d })
+                        .attr("text-anchor", "left")
+                        .style("alignment-baseline", "middle")
+                        .style("font-family", "Verdana")
+                        .style("font-weight", "bold")
+
+                    })
+
+                  </script>
+                </div>
+                <div class="card-footer small text-muted">
+                  由平均數(mean)可看出，疫情嚴重影響到該群整體的航班數量。但其中仍有一些機場表現良好，例如美國的PANC機場，藉由貨運彌補客運缺口。
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- 其他連結 -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+    crossorigin="anonymous"></script>
+  <script src="js/scripts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
+</body>
+
+</html>

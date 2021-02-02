@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <!--這句就是可以讓版面縮放的起始句-->
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>全球機場航班變化</title>
+    <link rel="stylesheet" href="https://yui-s.yahooapis.com/pure/0.5.0/pure-min.css">
+    <link rel="stylesheet" href="https://rawgit.com/tpreusse/radar-chart-d3/master/src/radar-chart.css">
+    <!-- zoom -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://rawgit.com/tpreusse/radar-chart-d3/master/src/radar-chart.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+
+    <!-- Color Scale -->
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <style>
+        img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .mapsvg {
+            background-color: #d6e9fd;
+            font-family: Verdana, sans-serif;
+        }
+    </style>
+
+    <link href="css/styles.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"
+        crossorigin="anonymous"></script>
+</head>
+
+<body class="sb-nav-fixed">
+
+    <!-- 上面那一行標頭-->
+    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <a class="navbar-brand" href="index.html"><i class="fas fa-head-side-mask"></i> 小心疫翼</a>
+        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i
+                class="fas fa-bars"></i></button>
+    </nav>
+
+    <!-- 左邊邊 -->
+    <div id="layoutSidenav">
+        <div id="layoutSidenav_nav">
+            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
+                <div class="sb-sidenav-menu">
+                    <div class="nav">
+                        <div class="sb-sidenav-menu-heading">首頁</div>
+                        <a class="nav-link" href="index.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                            總覽
+                        </a>
+                        <div class="sb-sidenav-menu-heading">分析結果</div>
+                        <a class="nav-link" href="country_change.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-globe-asia"></i></div>
+                            各國機場航班變化
+                        </a>
+                        <a class="nav-link" href="cluster_factor.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-thumbtack"></i></div>
+                            集群機場生態
+                        </a>
+                        <a class="nav-link" href="airport_cluster.html">
+                            <div class="sb-nav-link-icon"><i class="fas fa-paper-plane"></i></div>
+                            疫情前後差異
+                        </a>
+                    </div>
+                </div>
+                <div class="sb-sidenav-footer">
+                    <div class="small"></div>
+                    <i class="fas fa-users"></i> BDSE15-4
+                </div>
+            </nav>
+        </div>
+
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <h1 class="mt-4">全球航班與疫情</h1>
+                    <div class="card mb-4">
+                        <div class="card-body" id="description1">
+                            <!-- 2020年COVID-19疫情衝擊，全球航運是否能逃過一劫...... -->
+                        </div>
+                    </div>
+
+                    <!--World map-->
+                    <h2 class="cardh2"><i class="fas fa-map"></i> 全球航班數兩年度變化</h2>
+                    <div class="card mb-4">
+
+                        <div class="card-body">
+                            <svg id="my_colormap"></svg>
+                            <!-- <svg id="my_colormap" width="100%" height="800"></svg> -->
+                            <script>
+
+                                // The svg
+                                var svg = d3.select("svg").attr("class", "mapsvg"),
+                                    width = svg.attr("width"),
+                                    height = svg.attr("height");
+
+                                var path = d3.geoPath();
+                                var projection = d3.geoNaturalEarth()
+                                    .scale(300)
+                                    .center([-55, 35])
+                                    .translate([470, 280]); // height/3
+
+                                var g = svg.append("g");
+
+                                var data = d3.map();
+                                // Color scale
+                                var colorScale = d3.scaleThreshold()
+                                    .domain([-2, -0.5, -0.25, 0, 0.5, 5])
+                                    .range(["#2b9348", "#55a630", "#80b918", "#aacc00", "#dddf00", "#eeef20", "#ffff3f"])
+
+                                // Add legend
+                                svg.append("g")
+                                    .attr("class", "legendQuant")
+                                    .attr("transform", "translate(40," + (height - 200) + ")")
+
+                                var legend = d3.legendColor()
+                                    .labelFormat(d3.format(".2f"))
+                                    .labels(d3.legendHelpers.thresholdLabels)
+                                    .scale(colorScale)
+
+                                svg.select(".legendQuant")
+                                    .call(legend);
+
+                                // Load external data
+                                d3.queue()
+                                    .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")
+                                    .defer(d3.csv, "./data/ratio.csv", function (d) { data.set(d.code, d.ratio); })
+                                    .await(ready);
+
+                                console.log(data)
+
+                                function ready(error, topo) {
+                                    console.log(topo)
+
+                                    // 動畫
+                                    let mouseOver = function (d) {
+                                        d3.selectAll(".Country")
+                                            .style("opacity", 0.8)
+                                        d3.select(this)
+                                            .transition()
+                                            .duration(100)
+                                            .style("opacity", 1)
+                                            .style("stroke", "black")
+                                            .style("stroke-width", 2.5)
+                                    }
+
+                                    let mouseLeave = function (d) {
+                                        d3.selectAll(".Country")
+                                            .style("opacity", 0.8)
+                                        d3.select(this)
+                                            .transition()
+                                            .duration(100)
+                                            .style("stroke", "white")
+                                            .style("stroke-width", 1)
+                                    }
+
+                                    // Draw the map
+                                    g.selectAll("path")
+                                        .data(topo.features) // geojson
+                                        .enter()
+                                        .append("path")
+                                        .attr("d", d3.geoPath()
+                                            .projection(projection)
+                                        )
+                                        // Set the color of each country
+                                        .attr("fill", function (d) {
+                                            d.total = data.get(d.id) || 0;
+                                            return colorScale(d.total);
+                                        })
+                                        .style("stroke", "white")
+                                        .attr("class", "Country")
+                                        .style("opacity", .5)
+                                        .on("mouseover", mouseOver)
+                                        .on("mouseleave", mouseLeave)
+
+                                }
+
+                                // zoom
+                                var zoom = d3.behavior.zoom()
+                                    .on("zoom", function () {
+                                        g.attr("transform", "translate(" +
+                                            d3.event.translate.join(",") + ")scale(" + d3.event.scale + ")");
+                                        g.selectAll("path")
+                                            .attr("d", path.projection(projection));
+                                    });
+
+                                svg.call(zoom)
+
+                            </script>
+                        </div>
+                        <div class="card-footer small text-muted">
+                            全球142個國家中，有120個國家受到疫情衝擊，等同將近8成國家的航班數在2020年大幅減少。
+                        </div>
+                    </div>
+
+                    <h2 class="cardh2a"><i class="fas fa-plane"></i> 各國航班數兩年度比較</h2>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-tablet-alt"></i>
+                                    Taiwan
+                                </div>
+                                <div class="card-body">
+                                    <div id="my_dataviz1"></div>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    台灣以國際線航班占大宗，因此在6月疫情較穩定時，仍受到其他國家防疫政策的限制，航班恢復幅度不大。
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-camera-retro"></i>
+                                    Japan
+                                </div>
+                                <div class="card-body">
+                                    <div id="my_dataviz2" width="100%" height="50"></div>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    日本擁有國內線航班做支撐，因此在6月疫情較穩定時，航班有明顯的恢復。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-chess"></i>
+                                    United Kindom
+                                </div>
+                                <div class="card-body">
+                                    <div id="my_dataviz3" width="100%" height="50"></div>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    歐洲於9月底疫情死灰復燃，該地區國家航班特性為國內線與國際線兩者比重相當，因此可見於9月後航班數開始轉折往下走。
+                                    <p>另外英國不是在歐洲大陸上，距離該區域其他國家較遠，所以總航班數相較法國多。</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <i class="fas fa-coffee"></i>
+                                    France
+                                </div>
+                                <div class="card-body">
+                                    <div id="my_dataviz4" width="100%" height="50"></div>
+                                </div>
+                                <div class="card-footer small text-muted">
+                                    歐洲於9月底疫情死灰復燃，該地區國家航班特性為國內線與國際線兩者比重相當，因此可見於9月後航班數開始轉折往下走。
+                                    <p>法國位於歐洲大陸上，故可以藉由其他交通方式到達周邊國家，因此總航班數相較英國少。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 其他連結 -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="js/scripts.js"></script>
+    <script src="demo/TW.js"></script>
+    <script src="demo/JP.js"></script>
+    <script src="demo/GB.js"></script>
+    <script src="demo/FR.js"></script>
+
+</body>
+
+</html>
