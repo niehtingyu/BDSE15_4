@@ -16,7 +16,7 @@
 
 * **Repository Folders:**
   * **slides** folder contains pdf files for Hadoop constructing and project presenting
-  * **docs** folder contains files for data visualizing, please visit: https://timmynueh.github.io/BDSE15_4/
+  * **docs** folder contains files for data visualizing, please visit: https://niehtingyu.github.io/BDSE15_4/
   * **data** folder contains files for data analyzing, please read the following description
 
 
@@ -42,4 +42,4 @@
 * **Step 5 - Data Visualizing**
   * Template - Start Bootstrap - SB Admin: https://github.com/startbootstrap/startbootstrap-sb-admin
   * D3.js Template: https://www.d3-graph-gallery.com/
-  * Made the previously mentioned three topics shown on website, and presented the project with both slides and the website: https://timmynueh.github.io/BDSE15_4/
+  * Made the previously mentioned three topics shown on website, and presented the project with both slides and the website: https://niehtingyu.github.io/BDSE15_4/
